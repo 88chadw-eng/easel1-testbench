@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EASEL-1 · Browser Test Bench</title>
+<style>
+:root{--paper:#eee5ca;--ink:#29271f;--muted:#77715f;--orange:#d56b32;--blue:#497e9b;--yellow:#e7c64d;--line:#b7ad91}
+*{box-sizing:border-box}body{margin:0;background:#d4cbb4;color:var(--ink);font:14px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace}
+header{padding:18px 22px 12px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;align-items:end;gap:12px}
+h1{font-size:27px;letter-spacing:.13em;margin:0}header small{color:var(--muted);letter-spacing:.12em}
+main{max-width:1100px;margin:18px auto;padding:16px;background:var(--paper);border:2px solid var(--ink);box-shadow:7px 7px 0 #a79d86}
+.top{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}.module{border:1px solid var(--ink);padding:13px;margin-bottom:12px;min-width:0}
+.module h2{font-size:13px;letter-spacing:.16em;margin:0 0 13px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+.osc h2{color:var(--orange)}.mod h2{color:var(--blue)}.seq h2{color:#9b7a00}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:5px;font-size:11px;text-transform:uppercase;color:var(--muted)}
+output{color:var(--ink);font-size:12px}input[type=range]{width:100%;accent-color:var(--ink)}select,button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--ink);padding:8px}
+button{cursor:pointer}button:active,.active{background:var(--ink);color:var(--paper)}
+.transport{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.transport button:first-child{background:var(--ink);color:var(--paper)}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.step{background:var(--yellow);padding:9px 5px;text-align:center;border:1px solid var(--ink)}.step.current{outline:3px solid var(--orange);outline-offset:2px}
+.step input{width:100%;accent-color:var(--ink)}.step b{display:block;margin-bottom:7px}
+.keyboard{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin-top:10px}.key{height:66px;background:#faf7ec;border:1px solid var(--ink);display:flex;align-items:end;justify-content:center;padding-bottom:5px;font-size:10px;touch-action: manipulation}.key.black{background:#34332e;color:white;height:43px;margin:0 -8px;z-index:1}.meter{height:9px;background:#d5ccb5;border:1px solid var(--ink);margin-top:10px}.meter i{display:block;height:100%;width:0;background:var(--orange)}
+footer{font-size:10px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:700px){.top{grid-template-columns:1fr}main{margin:8px;padding:10px}header{padding:12px}h1{font-size:21px}.keyboard{grid-template-columns:repeat(7,1fr)}}
+</style></head>
+<body>
+<header><div><h1>EASEL-1</h1><small>COMPLEX OSCILLATOR · LOW-PASS GATE · FIVE-STEP SEQUENCER</small></div><small>DEVELOPMENT TEST BENCH / 0.1.0</small></header>
+<main>
+<div class="transport"><button id="power">AUDIO ON</button><button id="play">▶ RUN SEQUENCER</button><button id="stop">■ STOP</button><label style="max-width:130px">Tempo <output id="tempoOut">108 BPM</output><input id="tempo" type="range" min="50" max="180" value="108"></label><button id="save">SAVE PRESET</button><select id="presets"><option value="">Load preset…</option></select></div>
+<div class="top">
+<section class="module osc"><h2>01 / COMPLEX OSCILLATOR</h2><div class="controls">
+<label>Primary waveform<select id="wave"><option>sawtooth</option><option>triangle</option><option>square</option><option>sine</option></select></label>
+<label>Frequency <output id="freqOut">110 Hz</output><input id="freq" type="range" min="40" max="440" value="110"></label>
+<label>Modulator ratio <output id="ratioOut">2.00×</output><input id="ratio" type="range" min=".25" max="8" step=".05" value="2"></label>
+<label>Modulation index <output id="indexOut">18%</output><input id="index" type="range" min="0" max="100" value="18"></label>
+<label>Wave fold <output id="foldOut">0%</output><input id="fold" type="range" min="0" max="100" value="0"></label>
+<label>Sub level <output id="subOut">12%</output><input id="sub" type="range" min="0" max="60" value="12"></label>
+</div></section>
+<section class="module mod"><h2>02 / MODULATION</h2><div class="controls">
+<label>Source<select id="lfoWave"><option value="sine">Sine</option><option value="triangle">Triangle</option><option value="square">Square</option><option value="sawtooth">Ramp</option></select></label>
+<label>Rate <output id="rateOut">0.30 Hz</output><input id="rate" type="range" min=".05" max="12" step=".05" value=".3"></label>
+<label>Amount <output id="amountOut">20%</output><input id="amount" type="range" min="0" max="100" value="20"></label>
+<label>Destination<select id="dest"><option value="pitch">Pitch</option><option value="timbre">Timbre</option><option value="amplitude">Amplitude</option></select></label>
+<label>Attack <output id="attackOut">8 ms</output><input id="attack" type="range" min="1" max="1000" value="8"></label>
+<label>Decay <output id="decayOut">420 ms</output><input id="decay" type="range" min="30" max="3000" value="420"></label>
+</div></section></div>
+<section class="module"><h2>03 / LOW-PASS GATE</h2><div class="controls">
+<label>Gate level <output id="levelOut">75%</output><input id="level" type="range" min="0" max="100" value="75"></label>
+<label>Brightness <output id="brightOut">65%</output><input id="bright" type="range" min="5" max="100" value="65"></label>
+<label>Vactrol decay <output id="vactrolOut">650 ms</output><input id="vactrol" type="range" min="50" max="3000" value="650"></label>
+<label>Resonance <output id="resOut">8%</output><input id="res" type="range" min="0" max="70" value="8"></label>
+</div><div class="meter"><i id="meter"></i></div></section>
+<section class="module seq"><h2>04 / FIVE-STEP SEQUENCER</h2><div class="steps" id="steps"></div></section>
+<section class="module"><h2>05 / TOUCH KEYBOARD</h2><div class="keyboard" id="keyboard"></div></section>
+<footer><span>EASEL-1 IS AN EXPERIMENTAL BROWSER PROTOTYPE — NOT FM1 FIRMWARE.</span><span>Use headphones at a low volume when first enabling audio.</span></footer>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);let ctx=null,master=null,filter=null,amp=null,osc=null,mod=null,lfo=null,sub=null,seqTimer=null,stepIndex=0,active=[];
+const state={};const ids=['wave','freq','ratio','index','fold','sub','lfoWave','rate','amount','dest','attack','decay','level','bright','vactrol','res','tempo'];
+ids.forEach(id=>{state[id]=$(id).value;$(id).addEventListener('input',()=>{state[id]=$(id).value;updateLabels();apply()})});
+const labels={freq:v=>v+' Hz',ratio:v=>(+v).toFixed(2)+'×',index:v=>v+'%',fold:v=>v+'%',sub:v=>v+'%',rate:v=>(+v).toFixed(2)+' Hz',amount:v=>v+'%',attack:v=>v+' ms',decay:v=>v+' ms',level:v=>v+'%',bright:v=>v+'%',vactrol:v=>v+' ms',res:v=>v+'%',tempo:v=>v+' BPM'};
+function updateLabels(){Object.entries(labels).forEach(([k,f])=>$(k+'Out').textContent=f(state[k]))}
+function boot(){if(ctx)return;ctx=new (window.AudioContext||window.webkitAudioContext)();master=ctx.createGain();filter=ctx.createBiquadFilter();amp=ctx.createGain();filter.type='lowpass';filter.connect(amp).connect(master).connect(ctx.destination);master.gain.value=.35;amp.gain.value=0;
+osc=ctx.createOscillator();osc.type=state.wave;let shaper=ctx.createWaveShaper();let curve=new Float32Array(1024);for(let i=0;i<curve.length;i++){let x=i*2/(curve.length-1)-1;let f=+state.fold/100*4;curve[i]=f?Math.tanh(x*(1+f*5))/Math.tanh(1+f*5):x}shaper.curve=curve;
+mod=ctx.createOscillator();let modGain=ctx.createGain();mod.connect(modGain).connect(osc.frequency);mod.start();osc.connect(shaper).connect(filter);osc.start();
+sub=ctx.createOscillator();let sg=ctx.createGain();sg.gain.value=0;sub.type='sine';sub.frequency.value=+state.freq/2;sub.connect(sg).connect(filter);sub.start();lfo=ctx.createOscillator();let lg=ctx.createGain();lfo.connect(lg).connect(filter.frequency);lfo.start();window._easel={modGain,sg,lg,shaper};apply()}
+function apply(){if(!ctx)return;osc.type=state.wave;osc.frequency.setTargetAtTime(+state.freq,ctx.currentTime,.02);mod.frequency.setTargetAtTime(+state.freq*+state.ratio,ctx.currentTime,.02);window._easel.modGain.gain.setTargetAtTime(+state.index/100*+state.freq*2,ctx.currentTime,.02);window._easel.sg.gain.setTargetAtTime(+state.sub/100*.2,ctx.currentTime,.02);lfo.type=state.lfoWave;lfo.frequency.setTargetAtTime(+state.rate,ctx.currentTime,.03);window._easel.lg.gain.setTargetAtTime(state.dest==='timbre'?+state.amount*35:state.dest==='pitch'?+state.amount*.8:0,ctx.currentTime,.03);filter.Q.setTargetAtTime(+state.res/10,ctx.currentTime,.03);filter.frequency.setTargetAtTime(180+ +state.bright*75,ctx.currentTime,.03);master.gain.setTargetAtTime(.25,ctx.currentTime,.05)}
+function gate(note,velocity=1){boot();ctx.resume();let now=ctx.currentTime;osc.frequency.setTargetAtTime(note,now,.015);sub.frequency.setTargetAtTime(note/2,now,.015);let peak=+state.level/100*.55*velocity;filter.frequency.cancelScheduledValues(now);filter.frequency.setTargetAtTime(180+ +state.bright*75,now,.01);amp.gain.cancelScheduledValues(now);amp.gain.setValueAtTime(amp.gain.value,now);amp.gain.linearRampToValueAtTime(peak,now+ +state.attack/1000);amp.gain.setTargetAtTime(.0001,now+ +state.attack/1000,+state.vactrol/1000/4);$('meter').style.width=Math.min(100,peak*180)+'%'}
+function buildKeys(){let notes=[['C',0],['C♯',1],['D',2],['D♯',3],['E',4],['F',5],['F♯',6],['G',7],['G♯',8],['A',9],['A♯',10],['B',11],['C',12]];notes.forEach(([n,i])=>{let b=document.createElement('button');b.className='key '+([1,3,6,8,10].includes(i)?'black':'');b.textContent=n;b.onpointerdown=e=>{e.preventDefault();gate(261.63*Math.pow(2,i/12))};$('keyboard').append(b)})}
+let pitches=[0,3,7,10,7],gates=[1,1,1,1,1];function buildSteps(){ $('steps').innerHTML='';for(let i=0;i<5;i++){let d=document.createElement('div');d.className='step';d.innerHTML='<b>STEP '+(i+1)+'</b><label>Pitch <input aria-label="Step '+(i+1)+' pitch" type="range" min="-12" max="19" value="'+pitches[i]+'"></label><label>Gate <input aria-label="Step '+(i+1)+' gate" type="checkbox" '+(gates[i]?'checked':'')+'></label>';let ins=d.querySelectorAll('input');ins[0].oninput=()=>pitches[i]=+ins[0].value;ins[1].onchange=()=>gates[i]=ins[1].checked;$('steps').append(d)}}
+function tick(){let ds=$('steps').children;[...ds].forEach(d=>d.classList.remove('current'));ds[stepIndex].classList.add('current');if(gates[stepIndex])gate(110*Math.pow(2,pitches[stepIndex]/12));stepIndex=(stepIndex+1)%5}
+$('power').onclick=()=>{boot();ctx.resume();$('power').textContent='AUDIO READY'};$('play').onclick=()=>{boot();ctx.resume();if(seqTimer)clearInterval(seqTimer);tick();seqTimer=setInterval(tick,60000/+state.tempo)};$('stop').onclick=()=>{clearInterval(seqTimer);seqTimer=null;[...$('steps').children].forEach(d=>d.classList.remove('current'))};
+$('save').onclick=()=>{let name=prompt('Preset name?','New Easel Patch');if(!name)return;let presets=JSON.parse(localStorage.easel1Presets||'{}');presets[name]={state:{...state},pitches:[...pitches],gates:[...gates]};localStorage.easel1Presets=JSON.stringify(presets);loadPresets()};
+function loadPresets(){let p=JSON.parse(localStorage.easel1Presets||'{}');$('presets').innerHTML='<option value="">Load preset…</option>';Object.keys(p).forEach(n=>{let o=document.createElement('option');o.value=n;o.textContent=n;$('presets').append(o)})}
+$('presets').onchange=()=>{let p=JSON.parse(localStorage.easel1Presets||'{}')[$('presets').value];if(!p)return;Object.assign(state,p.state);ids.forEach(k=>$(k).value=state[k]);pitches=p.pitches;gates=p.gates;updateLabels();buildSteps();apply()};
+updateLabels();buildKeys();buildSteps();loadPresets();
+})();
+</script></body></html>
