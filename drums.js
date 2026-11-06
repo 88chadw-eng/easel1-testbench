@@ -10,7 +10,7 @@ const defaults=[
 {pitch:1450,sweep:0,sweepTime:10,decay:55,noise:0,body:30,level:72,prob:100,attack:1},
 {pitch:7000,sweep:0,sweepTime:10,decay:480,noise:88,body:20,level:42,prob:65,attack:1}
 ];
-const voices=defaults.map((v,i)=>({...v,name:names[i],mute:false,patch:{...(window.EASEL1?.getSoundState?.()||{}),pitchPunch:i===5?22:0,pitchTime:i===5?42:55,...(i===5?{wave:'sine',freq:'190',fold:'8',timbre:'-8',symmetry:'4',strike:'42',attack:'1',glide:'0',decay:'190',bright:'88',res:'32',vactrol:'220',level:'72',drive:'8'}:{})}})),patterns=Array.from({length:4},(_,p)=>voices.map((v,i)=>Array.from({length:16},(_,s)=>p===0?([0,4,8,12].includes(s)&&i===0)||([4,12].includes(s)&&i===1)||([2,6,10,14].includes(s)&&i===6)||([3,7,11,15].includes(s)&&i===4):p===1?([0,8].includes(s)&&i===0)||([4,12].includes(s)&&i===1)||([2,6,10,14].includes(s)&&i===5):p===2?([0,3,6,9,12,15].includes(s)&&i===0)||([4,12].includes(s)&&i===2)||([2,7,10,14].includes(s)&&i===3):Math.random()<.12)));
+const voices=defaults.map((v,i)=>({...v,name:names[i],mute:false,patch:{...(window.EASEL1?.getSoundState?.()||{}),pitchPunch:i===5?22:0,pitchTime:i===5?42:55,...(i===5?{wave:'sine',freq:'110',ratio:'1.5',index:'0',fold:'3',timbre:'-12',symmetry:'0',strike:'24',attack:'1',glide:'0',pitchPunch:'15',pitchTime:'38',decay:'210',bright:'92',res:'38',vactrol:'260',level:'78',drive:'3',sub:'0',amount:'0'}:{})}})),patterns=Array.from({length:4},(_,p)=>voices.map((v,i)=>Array.from({length:16},(_,s)=>p===0?([0,4,8,12].includes(s)&&i===0)||([4,12].includes(s)&&i===1)||([2,6,10,14].includes(s)&&i===6)||([3,7,11,15].includes(s)&&i===4):p===1?([0,8].includes(s)&&i===0)||([4,12].includes(s)&&i===1)||([2,6,10,14].includes(s)&&i===5):p===2?([0,3,6,9,12,15].includes(s)&&i===0)||([4,12].includes(s)&&i===2)||([2,7,10,14].includes(s)&&i===3):Math.random()<.12)));
 let activePattern=0,selected=0,step=0,timer=null,muted=false;
 const steps=patterns[0];
 function patchFields(){return [['wave','Waveform',['sine','triangle','sawtooth','square']],['freq','Oscillator frequency',40,440,1,' Hz'],['ratio','FM ratio',.25,8,.05,'×'],['index','FM index',0,100,1,'%'],['fold','Wavefold',0,100,1,'%'],['timbre','Pre-fold timbre',-100,100,1,'%'],['symmetry','Fold symmetry',-100,100,1,'%'],['sub','Sub oscillator',0,60,1,'%'],['strike','Strike transient',0,60,1,'%'],['lfoWave','LFO waveform',['sine','triangle','sawtooth','square']],['rate','LFO rate',.05,12,.05,' Hz'],['amount','LFO amount',0,100,1,'%'],['dest','LFO destination',['pitch','timbre']],['attack','Pluck attack',1,100,1,' ms'],['glide','Glide',0,500,1,' ms'],['pitchPunch','Pitch drop',0,36,1,' st'],['pitchTime','Pitch-drop time',8,180,1,' ms'],['decay','Main decay',60,3000,1,' ms'],['filterModel','Filter model',['lpg','ms20lp','ms20hp','moog','oberheim']],['bright','Brightness',5,100,1,'%'],['res','Resonance',0,95,1,'%'],['vactrol','Vactrol decay',80,3000,1,' ms'],['level','Gate level',0,100,1,'%'],['drive','Drive',0,100,1,'%']]};
@@ -27,14 +27,42 @@ const amp=ctx.createGain();amp.gain.setValueAtTime(.0001,now);amp.gain.linearRam
 const osc=ctx.createOscillator();osc.type=p.wave||'triangle';osc.frequency.setValueAtTime(pitch*(1+v.sweep/100),now);osc.frequency.exponentialRampToValueAtTime(Math.max(10,pitch),now+Math.max(.005,sweepTime/1000));
 if(i===0){osc.type='sine';osc.frequency.setValueAtTime(pitch*2.8,now);osc.frequency.exponentialRampToValueAtTime(pitch*.72,now+.095)}
 if(i===1){osc.type=p.wave==='sawtooth'?'sawtooth':'triangle';osc.frequency.setValueAtTime(pitch*1.4,now);osc.frequency.exponentialRampToValueAtTime(pitch*.72,now+.035)}
-if(i===2||i===3||i===5){osc.type=p.wave==='sine'?'sine':p.wave;osc.frequency.setValueAtTime(pitch*1.35,now);osc.frequency.exponentialRampToValueAtTime(pitch*.88,now+.045)}
+if(i===2||i===3){osc.type=p.wave==='sine'?'sine':p.wave;osc.frequency.setValueAtTime(pitch*1.35,now);osc.frequency.exponentialRampToValueAtTime(pitch*.88,now+.045)}
+if(i===5){osc.type='sine';osc.frequency.setValueAtTime(pitch*1.42,now);osc.frequency.exponentialRampToValueAtTime(Math.max(30,pitch),now+Math.max(.012,(+p.pitchTime||38)/1000));}
 if(i===4)osc.type=p.wave||'sawtooth';if(i===6)osc.type=p.wave||'square';if(i===7)osc.type=p.wave||'triangle';
 if(+p.pitchPunch>0){const target=osc.frequency.value,start=target*Math.pow(2,+p.pitchPunch/12);osc.frequency.setValueAtTime(start,now);osc.frequency.exponentialRampToValueAtTime(Math.max(10,target),now+Math.max(.008,(+p.pitchTime||55)/1000));}
 const shaper=ctx.createWaveShaper(),curve=new Float32Array(512),foldDrive=1+(+p.fold||0)/100*5,drive=1+(+p.drive||0)*.08,bias=(+p.symmetry||0)/100*.42,timbre=(+p.timbre||0)/100*.65;for(let n=0;n<512;n++){let x=n*2/511-1,shaped=x+timbre*(1-x*x),folded=Math.asin(Math.sin((shaped+bias)*foldDrive))*2/Math.PI;curve[n]=Math.tanh(folded*drive)}shaper.curve=curve;osc.connect(shaper).connect(amp);osc.start(now);osc.stop(now+Math.max(.06,decay/1000+.04));
+if(i===5){
+  // A small membrane-mode bank: fundamental plus inharmonic upper modes.
+  // Each mode has its own short decay and downward pitch relaxation.
+  const body=Math.max(0,Math.min(1,v.body/100));
+  const modes=[{ratio:1.59,gain:.34+.18*body,fall:8,decay:.58},{ratio:2.13,gain:.19+.12*body,fall:5,decay:.34},{ratio:2.91,gain:.09+.08*body,fall:3,decay:.22}];
+  modes.forEach((m,index)=>{
+    const partial=ctx.createOscillator(),pg=ctx.createGain();
+    partial.type='sine';
+    const start=pitch*m.ratio*(1+(index*.012));
+    partial.frequency.setValueAtTime(start*Math.pow(2,(+p.pitchPunch||15)/24),now);
+    partial.frequency.exponentialRampToValueAtTime(Math.max(25,pitch*m.ratio),now+Math.max(.012,(+p.pitchTime||38)/1000)*(1+index*.35));
+    pg.gain.setValueAtTime(.0001,now);
+    pg.gain.linearRampToValueAtTime(m.gain,now+Math.max(.001,attack/1000));
+    pg.gain.exponentialRampToValueAtTime(.0001,now+Math.max(.035,decay/1000*m.decay));
+    partial.connect(pg).connect(shaper);
+    partial.start(now);partial.stop(now+Math.max(.06,decay/1000*m.decay+.03));
+  });
+}
 const mod=ctx.createOscillator(),modGain=ctx.createGain();mod.type=p.lfoWave||'sine';mod.frequency.value=Math.max(.05,+p.rate||.3);modGain.gain.value=(+p.amount||0)*(p.dest==='pitch'?pitch*.002:Math.max(10,filter.frequency.value*.012));mod.connect(modGain).connect(p.dest==='pitch'?osc.detune:filter.frequency);mod.start(now);mod.stop(now+Math.max(.06,decay/1000));
 const fm=ctx.createOscillator(),fmGain=ctx.createGain();fm.frequency.value=Math.max(1,pitch*(+p.ratio||1));fmGain.gain.value=pitch*(+p.index||0)/100*.35;fm.connect(fmGain).connect(osc.frequency);fm.start(now);fm.stop(now+Math.max(.06,decay/1000));
 if(+p.sub>0){const sub=ctx.createOscillator(),sg=ctx.createGain();sub.type='sine';sub.frequency.value=pitch/2;sg.gain.value=(+p.sub/100)*.35;sub.connect(sg).connect(filter);sub.start(now);sub.stop(now+Math.max(.06,decay/1000))}
-if(v.noise>0||+p.strike>0){const len=Math.ceil(ctx.sampleRate*Math.min(1.8,decay/1000)),buf=ctx.createBuffer(1,len,ctx.sampleRate),data=buf.getChannelData(0);for(let n=0;n<len;n++)data[n]=(Math.random()*2-1)*(1-n/len);const src=ctx.createBufferSource(),ng=ctx.createGain();src.buffer=buf;ng.gain.value=Math.min(1,((v.noise/100)*(i===7?.8:.45))+(+p.strike/100*.25));src.connect(ng).connect(filter);src.start(now)}
+if(v.noise>0||+p.strike>0){
+  const noiseLength=i===5?.028:Math.min(1.8,decay/1000);
+  const len=Math.ceil(ctx.sampleRate*noiseLength),buf=ctx.createBuffer(1,len,ctx.sampleRate),data=buf.getChannelData(0);
+  for(let n=0;n<len;n++){const env=i===5?Math.exp(-n/(ctx.sampleRate*.006)):(1-n/len);data[n]=(Math.random()*2-1)*env}
+  const src=ctx.createBufferSource(),ng=ctx.createGain(),noiseFilter=ctx.createBiquadFilter();
+  src.buffer=buf;noiseFilter.type=i===5?'highpass':'lowpass';noiseFilter.frequency.value=i===5?Math.max(1200,2400+v.body*24):Math.max(300,Math.min(12000,pitch*5));
+  ng.gain.value=Math.min(1,((v.noise/100)*(i===7?.8:i===5?.16:.45))+(+p.strike/100*(i===5?.12:.25)));
+  if(i===5){ng.gain.setValueAtTime(ng.gain.value,now);ng.gain.exponentialRampToValueAtTime(.0001,now+.022)}
+  src.connect(noiseFilter).connect(ng).connect(filter);src.start(now)
+}
 }
 function tick(){const rows=$('trackGrid').querySelectorAll('.drum-steps');rows.forEach((r,i)=>{r.querySelectorAll('button').forEach((b,s)=>{b.classList.toggle('playhead',s===step);if(s===step&&patterns[activePattern][i][s]&&Math.random()*100<voices[i].prob)hit(i,.65+Math.random()*.35)})});step=(step+1)%16}
 function stop(){if(timer)clearInterval(timer);timer=null;$('drumPlay').textContent='▶ RUN 16 STEPS';$('trackGrid').querySelectorAll('.playhead').forEach(b=>b.classList.remove('playhead'))}
