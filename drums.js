@@ -6,7 +6,7 @@ const defaults=[
 {pitch:115,sweep:24,sweepTime:45,decay:280,noise:4,body:78,level:74,prob:100,attack:2},
 {pitch:260,sweep:28,sweepTime:35,decay:150,noise:3,body:62,level:66,prob:100,attack:1},
 {pitch:520,sweep:0,sweepTime:20,decay:360,noise:38,body:60,level:48,prob:80,attack:1},
-{pitch:390,sweep:20,sweepTime:35,decay:170,noise:4,body:82,level:65,prob:100,attack:1},
+{pitch:155,sweep:34,sweepTime:22,decay:145,noise:2,body:76,level:78,prob:100,attack:1},
 {pitch:1450,sweep:0,sweepTime:10,decay:55,noise:0,body:30,level:72,prob:100,attack:1},
 {pitch:7000,sweep:0,sweepTime:10,decay:480,noise:88,body:20,level:42,prob:65,attack:1}
 ];
@@ -28,7 +28,7 @@ const osc=ctx.createOscillator();osc.type=p.wave||'triangle';osc.frequency.setVa
 if(i===0){osc.type='sine';osc.frequency.setValueAtTime(pitch*2.8,now);osc.frequency.exponentialRampToValueAtTime(pitch*.72,now+.095)}
 if(i===1){osc.type=p.wave==='sawtooth'?'sawtooth':'triangle';osc.frequency.setValueAtTime(pitch*1.4,now);osc.frequency.exponentialRampToValueAtTime(pitch*.72,now+.035)}
 if(i===2||i===3){osc.type=p.wave==='sine'?'sine':p.wave;osc.frequency.setValueAtTime(pitch*1.35,now);osc.frequency.exponentialRampToValueAtTime(pitch*.88,now+.045)}
-if(i===5){osc.type='sine';osc.frequency.setValueAtTime(pitch*1.42,now);osc.frequency.exponentialRampToValueAtTime(Math.max(30,pitch),now+Math.max(.012,(+p.pitchTime||38)/1000));}
+if(i===5){osc.type='sine';osc.frequency.setValueAtTime(pitch*1.85,now);osc.frequency.exponentialRampToValueAtTime(Math.max(30,pitch),now+Math.max(.012,Math.min(.035,(+p.pitchTime||28)/1000)));}
 if(i===4)osc.type=p.wave||'sawtooth';if(i===6)osc.type=p.wave||'square';if(i===7)osc.type=p.wave||'triangle';
 if(+p.pitchPunch>0){const target=osc.frequency.value,start=target*Math.pow(2,+p.pitchPunch/12);osc.frequency.setValueAtTime(start,now);osc.frequency.exponentialRampToValueAtTime(Math.max(10,target),now+Math.max(.008,(+p.pitchTime||55)/1000));}
 const shaper=ctx.createWaveShaper(),curve=new Float32Array(512),foldDrive=1+(+p.fold||0)/100*5,drive=1+(+p.drive||0)*.08,bias=(+p.symmetry||0)/100*.42,timbre=(+p.timbre||0)/100*.65;for(let n=0;n<512;n++){let x=n*2/511-1,shaped=x+timbre*(1-x*x),folded=Math.asin(Math.sin((shaped+bias)*foldDrive))*2/Math.PI;curve[n]=Math.tanh(folded*drive)}shaper.curve=curve;osc.connect(shaper).connect(amp);osc.start(now);osc.stop(now+Math.max(.06,decay/1000+.04));
@@ -36,7 +36,7 @@ if(i===5){
   // A small membrane-mode bank: fundamental plus inharmonic upper modes.
   // Each mode has its own short decay and downward pitch relaxation.
   const body=Math.max(0,Math.min(1,v.body/100));
-  const modes=[{ratio:1.59,gain:.34+.18*body,fall:8,decay:.58},{ratio:2.13,gain:.19+.12*body,fall:5,decay:.34},{ratio:2.91,gain:.09+.08*body,fall:3,decay:.22}];
+  const modes=[{ratio:1.48,gain:.42+.16*body,fall:8,decay:.42},{ratio:2.06,gain:.22+.10*body,fall:5,decay:.25},{ratio:2.72,gain:.10+.06*body,fall:3,decay:.16}];
   modes.forEach((m,index)=>{
     const partial=ctx.createOscillator(),pg=ctx.createGain();
     partial.type='sine';
@@ -54,12 +54,12 @@ const mod=ctx.createOscillator(),modGain=ctx.createGain();mod.type=p.lfoWave||'s
 const fm=ctx.createOscillator(),fmGain=ctx.createGain();fm.frequency.value=Math.max(1,pitch*(+p.ratio||1));fmGain.gain.value=pitch*(+p.index||0)/100*.35;fm.connect(fmGain).connect(osc.frequency);fm.start(now);fm.stop(now+Math.max(.06,decay/1000));
 if(+p.sub>0){const sub=ctx.createOscillator(),sg=ctx.createGain();sub.type='sine';sub.frequency.value=pitch/2;sg.gain.value=(+p.sub/100)*.35;sub.connect(sg).connect(filter);sub.start(now);sub.stop(now+Math.max(.06,decay/1000))}
 if(v.noise>0||+p.strike>0){
-  const noiseLength=i===5?.028:Math.min(1.8,decay/1000);
+  const noiseLength=i===5?.018:Math.min(1.8,decay/1000);
   const len=Math.ceil(ctx.sampleRate*noiseLength),buf=ctx.createBuffer(1,len,ctx.sampleRate),data=buf.getChannelData(0);
-  for(let n=0;n<len;n++){const env=i===5?Math.exp(-n/(ctx.sampleRate*.006)):(1-n/len);data[n]=(Math.random()*2-1)*env}
+  for(let n=0;n<len;n++){const env=i===5?Math.exp(-n/(ctx.sampleRate*.0035)):(1-n/len);data[n]=(Math.random()*2-1)*env}
   const src=ctx.createBufferSource(),ng=ctx.createGain(),noiseFilter=ctx.createBiquadFilter();
   src.buffer=buf;noiseFilter.type=i===5?'highpass':'lowpass';noiseFilter.frequency.value=i===5?Math.max(1200,2400+v.body*24):Math.max(300,Math.min(12000,pitch*5));
-  ng.gain.value=Math.min(1,((v.noise/100)*(i===7?.8:i===5?.16:.45))+(+p.strike/100*(i===5?.12:.25)));
+  ng.gain.value=Math.min(1,((v.noise/100)*(i===7?.8:i===5?.22:.45))+(+p.strike/100*(i===5?.12:.25)));
   if(i===5){ng.gain.setValueAtTime(ng.gain.value,now);ng.gain.exponentialRampToValueAtTime(.0001,now+.022)}
   src.connect(noiseFilter).connect(ng).connect(filter);src.start(now)
 }
